@@ -34,6 +34,7 @@ Alternatively, you can just run `npm install` if you already have the `package.j
 ## ⚠️ Important: Demo Restrictions
 
 Please be aware of the following demo limitations:
+
 - **In-Memory Database:** This demo uses an in-memory array to store tickets. **All data will be lost when the server is restarted.**
 - **Simulated Webhooks:** Notifications are merely logged in the console and not actually sent to external webhooks.
 - **API Keys:** The Google Gemini API key is currently included in `server.js` for demonstration and educational purposes. In a production app, it should be protected via environment variables.
