@@ -1,0 +1,140 @@
+<%- include('partials/header') %>
+
+<div class="d-flex justify-content-between align-items-end mb-4 mt-2">
+    <div>
+        <h2 class="fw-bold mb-1"><span class="text-gradient">Active Tickets</span></h2>
+        <p class="text-muted mb-0">Overview of all reported issues</p>
+    </div>
+    <a href="/" class="btn btn-brand d-flex align-items-center">
+        <i class="bi bi-plus-lg me-2"></i> Report Issue
+    </a>
+</div>
+
+<% if (tickets.length === 0) { %>
+    <div class="premium-card p-5 text-center mt-4">
+        <div class="display-1 text-muted opacity-25 mb-3"><i class="bi bi-inbox"></i></div>
+        <h4 class="fw-bold text-dark">No active tickets</h4>
+        <p class="text-muted">Everything is running smoothly! No issues have been reported yet.</p>
+        <a href="/" class="btn btn-outline-primary mt-2 rounded-pill px-4">Submit a Ticket</a>
+    </div>
+<% } else { %>
+    <div class="table-responsive rounded-3 pb-3">
+        <table class="table custom-table align-middle">
+            <thead>
+                <tr>
+                    <th class="ps-4">Ticket</th>
+                    <th>Reported By</th>
+                    <th>Issue Summary</th>
+                    <th class="text-center">Priority</th>
+                    <th class="text-center">Status</th>
+                    <th class="text-center pe-4">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% tickets.forEach(ticket => { %>
+                    <tr>
+                        <td class="ps-4">
+                            <span class="text-muted fw-bold font-monospace small">#TK-<%= String(ticket.id).padStart(4, '0') %></span>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="bg-primary-soft rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                    <span class="fw-bold text-primary"><%= ticket.employeeName.charAt(0).toUpperCase() %></span>
+                                </div>
+                                <div>
+                                    <div class="fw-semibold text-dark"><%= ticket.employeeName %></div>
+                                    <div class="small text-muted"><i class="bi bi-building me-1"></i><%= ticket.department || 'N/A' %></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="fw-medium text-dark"><%= ticket.issueTitle %></td>
+                        <td class="text-center">
+                            <% if (ticket.priority === 'High') { %>
+                                <span class="badge bg-danger-soft"><i class="bi bi-arrow-up-circle me-1"></i>High</span>
+                            <% } else if (ticket.priority === 'Medium') { %>
+                                <span class="badge bg-warning-soft"><i class="bi bi-dash-circle me-1"></i>Medium</span>
+                            <% } else { %>
+                                <span class="badge bg-success-soft"><i class="bi bi-arrow-down-circle me-1"></i>Low</span>
+                            <% } %>
+                        </td>
+                        <td class="text-center">
+                            <% if (ticket.status === 'Open') { %>
+                                <span class="badge bg-primary-soft text-primary"><i class="bi bi-circle me-1"></i>Open</span>
+                            <% } else if (ticket.status === 'In Progress') { %>
+                                <span class="badge bg-warning-soft"><i class="bi bi-arrow-repeat me-1 fast-spin"></i>In Progress</span>
+                            <% } else if (ticket.status === 'Closed') { %>
+                                <span class="badge bg-secondary-soft"><i class="bi bi-check2-circle me-1"></i>Closed</span>
+                            <% } %>
+                        </td>
+                        <td class="text-center pe-4">
+                            <!-- Edit Ticket Modal Trigger -->
+                            <button type="button" class="btn btn-sm btn-outline-secondary px-2 py-1 rounded-3 transition-all hover-scale" data-bs-toggle="modal" data-bs-target="#editModal<%= ticket.id %>" title="Edit Ticket">
+                                <i class="bi bi-pencil-square"></i>
+                            </button>
+                        </td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Edit Ticket Modals (Rendered outside table) -->
+    <% tickets.forEach(ticket => { %>
+        <div class="modal fade" id="editModal<%= ticket.id %>" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 premium-card">
+                    <div class="modal-header border-0 bg-light rounded-top">
+                        <h5 class="modal-title fw-bold text-dark"><i class="bi bi-pencil-fill text-primary me-2"></i>Edit Ticket #TK-<%= String(ticket.id).padStart(4, '0') %></h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-4 text-start">
+                        <form action="/tickets/edit/<%= ticket.id %>" method="POST">
+                            <div class="mb-3">
+                                <label class="form-label text-muted small fw-bold">Issue Title</label>
+                                <input type="text" class="form-control" name="issueTitle" value="<%= ticket.issueTitle %>" required>
+                            </div>
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <label class="form-label text-muted small fw-bold">Priority</label>
+                                    <select class="form-select" name="priority">
+                                        <option value="Low" <%= ticket.priority === 'Low' ? 'selected' : '' %>>Low</option>
+                                        <option value="Medium" <%= ticket.priority === 'Medium' ? 'selected' : '' %>>Medium</option>
+                                        <option value="High" <%= ticket.priority === 'High' ? 'selected' : '' %>>High</option>
+                                    </select>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label text-muted small fw-bold">Department</label>
+                                    <input type="text" class="form-control" name="department" value="<%= ticket.department || '' %>" required>
+                                </div>
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label text-muted small fw-bold">Description</label>
+                                <textarea class="form-control" name="description" rows="5" required><%= ticket.description %></textarea>
+                            </div>
+                            <div class="d-flex justify-content-end gap-2 mt-4">
+                                <button type="button" class="btn btn-light rounded-3 px-4" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-brand rounded-3 px-4">Save Changes</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <% }) %>
+<% } %>
+
+<style>
+    .fast-spin { animation: spin 2s linear infinite; display: inline-block; }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+</style>
+
+<script>
+    // Fix Bootstrap Modals stacking context issue inside transformed containers
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.modal').forEach(modal => {
+            document.body.appendChild(modal);
+        });
+    });
+</script>
+
+<%- include('partials/footer') %>

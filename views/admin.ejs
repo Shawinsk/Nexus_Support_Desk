@@ -1,0 +1,191 @@
+<%- include('partials/header') %>
+
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end mb-5 mt-2">
+    <div>
+        <h2 class="fw-bold mb-1"><i class="bi bi-shield-lock text-primary me-2"></i>Admin <span class="text-gradient">Portal</span></h2>
+        <p class="text-muted mb-0">Manage tickets, assign statuses, and resolve issues.</p>
+    </div>
+    
+    <!-- Quick Stats -->
+    <!-- Quick Stats -->
+    <div class="d-flex flex-wrap gap-2 gap-md-3 mt-4 mt-md-0 align-items-center">
+        <div class="bg-white px-3 px-md-4 py-2 rounded-pill shadow-sm border" style="border-color: rgba(255,255,255,0.5);">
+            <span class="text-muted small fw-bold text-uppercase tracking-wider">Total</span>
+            <span class="fs-5 fw-bold ms-2 text-dark"><%= tickets.length %></span>
+        </div>
+        <div class="bg-white px-3 px-md-4 py-2 rounded-pill shadow-sm border" style="border-color: rgba(255,255,255,0.5);">
+            <span class="text-muted small fw-bold text-uppercase tracking-wider">Open</span>
+            <span class="fs-5 fw-bold ms-2 text-primary"><%= tickets.filter(t => t.status === 'Open').length %></span>
+        </div>
+        
+        <!-- Export to Excel/CSV Button -->
+        <a href="/admin/export" class="btn btn-brand rounded-pill shadow-sm ms-md-2 d-flex align-items-center" title="Download Report">
+            <i class="bi bi-file-earmark-excel fs-5 me-2"></i> Export Report
+        </a>
+    </div>
+</div>
+
+<% if (tickets.length === 0) { %>
+    <div class="premium-card p-5 text-center mt-4">
+        <div class="display-1 text-muted opacity-25 mb-3"><i class="bi bi-check-circle"></i></div>
+        <h4 class="fw-bold text-dark">Inbox Zero!</h4>
+        <p class="text-muted">No tickets require admin action. Great job maintaining the systems.</p>
+    </div>
+<% } else { %>
+    <div class="row row-cols-1 row-cols-lg-2 g-4">
+        <% [...tickets].reverse().forEach(ticket => { %>
+            <div class="col">
+                <div class="premium-card h-100 <%= ticket.status === 'Closed' ? 'opacity-75' : '' %>">
+                    <!-- Card Status Bar -->
+                    <div class="w-100 rounded-top status-bar-<%= ticket.status.replace(/\s+/g, '-').toLowerCase() %>" style="height: 6px;"></div>
+                    
+                    <div class="p-4 d-flex flex-column h-100">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <span class="badge bg-light text-muted border mb-2 font-monospace">#TK-<%= String(ticket.id).padStart(4, '0') %></span>
+                                <h5 class="fw-bold text-dark mb-1"><%= ticket.issueTitle %></h5>
+                            </div>
+                            <span class="badge <%= ticket.priority === 'High' ? 'bg-danger-soft' : (ticket.priority === 'Medium' ? 'bg-warning-soft' : 'bg-success-soft') %> border-0 ms-2 text-nowrap">
+                                <%= ticket.priority %> Priority
+                            </span>
+                        </div>
+                        
+                        <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                            <!-- Employee Info -->
+                            <div class="d-flex align-items-center bg-light px-3 py-1 rounded-pill border" style="border-style: dashed !important;">
+                                <i class="bi bi-person-circle text-muted me-2"></i>
+                                <span class="fw-medium text-secondary small"><%= ticket.employeeName %> <span class="text-muted ms-1">(<%= ticket.department || 'N/A' %>)</span></span>
+                            </div>
+                            
+                            <!-- Smart Dispatch Assigned Team -->
+                            <% if (ticket.assignedTo) { %>
+                                <div class="d-flex align-items-center bg-primary-soft px-3 py-1 rounded-pill border">
+                                    <i class="bi bi-diagram-3-fill text-primary me-2"></i>
+                                    <span class="fw-bold text-primary small"><%= ticket.assignedTo %></span>
+                                </div>
+                            <% } %>
+
+                            <!-- SLA Timer System -->
+                            <% if (ticket.slaDeadline) { 
+                                const msLeft = new Date(ticket.slaDeadline).getTime() - new Date().getTime();
+                                const hoursLeft = Math.floor(msLeft / 3600000);
+                                const minsLeft = Math.floor((msLeft % 3600000) / 60000);
+                                
+                                let slaStyle = hoursLeft < 0 ? 'bg-danger text-white border-0' : (hoursLeft < 2 ? 'bg-warning text-dark border-0' : 'bg-success-soft text-success');
+                                let slaText = hoursLeft < 0 ? 'SLA BREACHED!' : `${hoursLeft}h ${minsLeft}m Left`;
+                                if (ticket.status === 'Closed') { slaStyle = 'bg-secondary text-white border-0'; slaText = 'Resolved in Time'; }
+                            %>
+                                <div class="sla-timer d-flex align-items-center px-3 py-1 rounded-pill border <%= slaStyle %>" data-deadline="<%= ticket.slaDeadline %>" data-status="<%= ticket.status %>">
+                                    <i class="bi bi-stopwatch<%= hoursLeft < 0 && ticket.status !== 'Closed' ? ' fast-spin' : '' %> me-2"></i>
+                                    <span class="fw-bold small"><%= slaText %></span>
+                                </div>
+                            <% } %>
+                        </div>
+                        
+                        <div class="bg-light p-3 rounded-3 border flex-grow-1 text-muted fs-6 mb-4" style="border-style: dashed !important;">
+                            <div class="mb-3"><%= ticket.description %></div>
+                            
+                            <!-- Admin AI Assistant Integration -->
+                            <div class="pt-3 border-top border-secondary border-opacity-10">
+                                <button type="button" class="btn btn-sm bg-primary-soft text-primary fw-bold border-0 transition-all hover-scale" onclick="generateSolution('<%= ticket.id %>', this)">
+                                    <i class="bi bi-stars me-1 text-warning"></i> Auto-Generate Solution
+                                </button>
+                                <div id="ai-solution-<%= ticket.id %>" class="mt-3 d-none p-3 bg-white border rounded shadow-sm text-dark" style="border-left: 4px solid var(--brand-color) !important;">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-auto pt-3 border-top d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3">
+                            <!-- Update Status -->
+                            <form action="/admin/update/<%= ticket.id %>" method="POST" class="d-flex align-items-center flex-grow-1">
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-transparent border-end-0 text-muted fw-bold">Status</span>
+                                    <select name="status" class="form-select border-start-0 text-dark fw-medium" onchange="this.form.submit()">
+                                        <option value="Open" <%= ticket.status === 'Open' ? 'selected' : '' %>>Open</option>
+                                        <option value="In Progress" <%= ticket.status === 'In Progress' ? 'selected' : '' %>>In Progress</option>
+                                        <option value="Closed" <%= ticket.status === 'Closed' ? 'selected' : '' %>>Closed</option>
+                                    </select>
+                                </div>
+                            </form>
+
+                            <!-- Delete Ticket -->
+                            <form action="/admin/delete/<%= ticket.id %>" method="POST" class="m-0" onsubmit="return confirm('WARNING: Are you sure you want to completely delete ticket #TK-<%= ticket.id %>? This cannot be undone.');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger px-3 d-flex align-items-center rounded-3 transition-all hover-scale">
+                                    <i class="bi bi-trash3 me-2"></i> Delete
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <% }); %>
+    </div>
+<% } %>
+
+<style>
+    .tracking-wider { letter-spacing: 0.05em; }
+    .hover-scale:hover { transform: scale(1.05); }
+    .transition-all { transition: all 0.2s; }
+    .status-bar-closed { background-color: #94a3b8; }
+    .status-bar-in-progress { background-color: #f59e0b; }
+    .status-bar-open { background-color: var(--brand-color); }
+</style>
+
+<script>
+    // Admin AI Solution Generation
+    async function generateSolution(ticketId, btn) {
+        const solutionDiv = document.getElementById(`ai-solution-${ticketId}`);
+        const originalHtml = btn.innerHTML;
+        
+        btn.innerHTML = '<i class="bi bi-hourglass-split fast-spin me-1"></i> Analyzing description...';
+        btn.disabled = true;
+        
+        solutionDiv.classList.remove('d-none');
+        solutionDiv.innerHTML = '<div class="text-muted small"><i class="bi bi-robot fast-spin me-2"></i>Nexus AI is formulating a solution...</div>';
+
+        try {
+            const response = await fetch('/api/admin/solve', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: ticketId })
+            });
+            const data = await response.json();
+            
+            if (data.solution) {
+                solutionDiv.innerHTML = `
+                    <h6 class="text-primary fw-bold mb-2"><i class="bi bi-robot me-1"></i> AI Recommended Solution</h6>
+                    <div class="fs-6">${data.solution}</div>
+                `;
+                btn.style.display = 'none'; // Hide button after generating
+            } else {
+                throw new Error("No solution generated");
+            }
+        } catch (error) {
+            solutionDiv.classList.add('d-none');
+            alert('Failed to connect to AI server. Please check API Key or try again.');
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+        }
+    }
+
+    // Live SLA Timer update
+    setInterval(() => {
+        document.querySelectorAll('.sla-timer').forEach(el => {
+            const deadline = new Date(el.dataset.deadline).getTime();
+            if (!deadline || el.dataset.status === 'Closed') return;
+            const now = new Date().getTime();
+            const msLeft = deadline - now;
+            
+            if (msLeft < 0) {
+                el.innerHTML = '<i class="bi bi-stopwatch fast-spin me-2"></i><span class="fw-bold small">SLA BREACHED!</span>';
+                el.className = 'd-flex align-items-center px-3 py-1 rounded-pill border bg-danger text-white border-0 sla-timer';
+            } else {
+                const hoursLeft = Math.floor(msLeft / 3600000);
+                const minsLeft = Math.floor((msLeft % 3600000) / 60000);
+                el.querySelector('.fw-bold').innerText = `${hoursLeft}h ${minsLeft}m Left`;
+            }
+        });
+    }, 60000); // update every minute
+</script>
+
+<%- include('partials/footer') %>
