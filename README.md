@@ -4,6 +4,23 @@
 
 Nexus Support Desk is an IT Help Desk Ticketing System built using Node.js, Express, and EJS. This application is a demonstration designed to showcase various modern help desk features, including AI integration and smart dispatch engines.
 
+## Required Libraries
+
+Before running this project, you need to install the following libraries to make sure everything works correctly:
+
+- `express` (for the backend server)
+- `ejs` (for the view engine)
+- `axios` (for HTTP requests)
+- `@google/generative-ai` (for Google Gemini AI integration)
+
+To install all of these dependencies, run the following command in your terminal:
+
+```bash
+npm install express ejs axios @google/generative-ai
+```
+
+Alternatively, you can just run `npm install` if you already have the `package.json` file.
+
 ## Features
 
 - **Smart Dispatch & SLA Engine:** Automatically routes tickets to the appropriate team (Hardware, Software, Network) based on issue keywords and calculates SLA deadlines based on Ticket Priority.
@@ -17,6 +34,7 @@ Nexus Support Desk is an IT Help Desk Ticketing System built using Node.js, Expr
 ## ⚠️ Important: Demo Restrictions
 
 Please be aware of the following demo limitations:
+
 - **In-Memory Database:** This demo uses an in-memory array to store tickets. **All data will be lost when the server is restarted.**
 - **Simulated Webhooks:** Notifications are merely logged in the console and not actually sent to external webhooks.
 - **API Keys:** The Google Gemini API key is currently included in `server.js` for demonstration and educational purposes. In a production app, it should be protected via environment variables.
