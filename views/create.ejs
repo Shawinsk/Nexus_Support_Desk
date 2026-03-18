@@ -1,0 +1,186 @@
+<%- include('partials/header') %>
+
+<div class="row justify-content-center mt-3">
+    <div class="col-lg-8 col-xl-7">
+        <div class="text-center mb-5">
+            <h1 class="fw-bold mb-3 display-6">How can we <span class="text-gradient">help you</span> today?</h1>
+            <p class="text-muted lead fs-6">Submit your IT issue below and our support team will assist you shortly.</p>
+        </div>
+
+        <div class="premium-card p-4 p-md-5 mb-5 mx-auto relative">
+            <div class="position-absolute top-0 start-50 translate-middle">
+                <div class="bg-white p-3 rounded-circle shadow-sm" style="border: 1px solid rgba(79, 70, 229, 0.2);">
+                    <i class="bi bi-headset fs-3 text-primary d-block" style="color: var(--brand-color) !important;"></i>
+                </div>
+            </div>
+
+            <!-- Create Ticket Form -->
+            <form action="/tickets" method="POST" class="mt-4">
+                
+                <div class="row g-4 mb-4">
+                    <div class="col-md-4">
+                        <label for="employeeName" class="form-label">Employee Name</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-transparent border-end-0 text-muted"><i class="bi bi-person"></i></span>
+                            <input type="text" class="form-control border-start-0 ps-0" id="employeeName" name="employeeName" required placeholder="John Doe">
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label for="department" class="form-label">Department</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-transparent border-end-0 text-muted"><i class="bi bi-building"></i></span>
+                            <select class="form-select border-start-0 ps-0 text-muted" id="department" name="department" required>
+                                <option value="" disabled selected>Select department...</option>
+                                <option value="HR">Human Resources</option>
+                                <option value="Finance">Finance</option>
+                                <option value="Marketing">Marketing</option>
+                                <option value="Sales">Sales</option>
+                                <option value="Engineering">Engineering</option>
+                                <option value="Operations">Operations</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label for="priority" class="form-label">Priority Level</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-transparent border-end-0 text-muted"><i class="bi bi-bar-chart"></i></span>
+                            <select class="form-select border-start-0 ps-0 text-muted" id="priority" name="priority" required>
+                                <option value="" disabled selected>Select priority...</option>
+                                <option value="Low">Low - Minor issue</option>
+                                <option value="Medium">Medium - Need help soon</option>
+                                <option value="High" class="text-danger fw-bold">High - Urgent / Blocked</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <label for="issueTitle" class="form-label">Issue Summary</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-transparent border-end-0 text-muted"><i class="bi bi-type"></i></span>
+                            <input type="text" class="form-control border-start-0 ps-0" id="issueTitle" name="issueTitle" required placeholder="E.g., Cannot connect to office Wi-Fi">
+                        </div>
+                    </div>
+
+                    <div class="col-12 position-relative">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <label for="description" class="form-label mb-0">Detailed Description</label>
+                            <button type="button" id="voiceBtn" class="btn btn-sm btn-outline-primary border-0 rounded-pill px-3 shadow-none bg-primary-soft">
+                                <i class="bi bi-mic-fill me-1"></i> Voice Typing
+                            </button>
+                        </div>
+                        <textarea class="form-control" id="description" name="description" rows="5" required placeholder="Please provide as much text detail as possible so we can help faster..."></textarea>
+                        
+                        <!-- AI Troubleshooting Popup -->
+                        <div id="aiPopup" class="d-none mt-3 p-3 bg-white border border-primary rounded-3 shadow-sm animate-fade-in" style="border-left: 4px solid var(--brand-color) !important;">
+                            <div class="d-flex align-items-start">
+                                <div class="bg-primary-soft p-2 rounded-circle me-3 mt-1 d-flex align-items-center justify-content-center">
+                                    <i class="bi bi-robot fs-5 text-primary"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="text-primary fw-bold mb-1">Nexus AI Assistant</h6>
+                                    <p class="small text-muted mb-0 lh-sm" id="aiSuggestion">Analyzing text...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center mt-5">
+                    <button type="submit" class="btn btn-brand w-100 py-3 fs-5 shadow-sm d-flex align-items-center justify-content-center">
+                        <i class="bi bi-send-fill me-2 fs-5"></i> Submit Support Ticket
+                    </button>
+                    <p class="text-muted small mt-3"><i class="bi bi-shield-check me-1"></i> Data is securely saved to the tracking system</p>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ==========================================
+    // 🎤 4. VOICE-TO-TEXT FEATURE
+    // ==========================================
+    const voiceBtn = document.getElementById('voiceBtn');
+    const descField = document.getElementById('description');
+    
+    // Check if browser supports Web Speech API
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+        const recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = 'en-US';
+
+        voiceBtn.addEventListener('click', () => {
+            voiceBtn.innerHTML = '<i class="bi bi-mic me-1 text-danger spinner-grow spinner-grow-sm"></i> Listening...';
+            recognition.start();
+        });
+
+        recognition.onresult = (event) => {
+            const transcript = event.results[event.resultIndex][0].transcript;
+            descField.value += (descField.value ? ' ' : '') + transcript;
+            aiAnalyze(); // Trigger AI analysis automatically
+        };
+
+        recognition.onend = () => {
+            voiceBtn.innerHTML = '<i class="bi bi-mic-fill me-1"></i> Voice Typing';
+        };
+    } else {
+        voiceBtn.style.display = 'none'; // Hide if browser doesn't support
+    }
+
+    // ==========================================
+    // 🤖 1. AI ASSISTANT (NLP & GEMINI API INTEGRATION)
+    // ==========================================
+    const aiPopup = document.getElementById('aiPopup');
+    const aiSuggestion = document.getElementById('aiSuggestion');
+    const titleField = document.getElementById('issueTitle');
+    const priorityField = document.getElementById('priority');
+    
+    let debounceTimer;
+
+    async function fetchAiSuggestion(text) {
+        if (text.length <= 10) {
+            aiPopup.classList.add('d-none');
+            return;
+        }
+
+        aiPopup.classList.remove('d-none');
+        aiSuggestion.innerHTML = '<i>Processing issue context with AI...</i>';
+
+        try {
+            const response = await fetch('/api/ai-suggest', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text })
+            });
+            const data = await response.json();
+            
+            if (data.suggestion) {
+                aiSuggestion.innerHTML = data.suggestion;
+                // Auto-set priority based on AI recommendation
+                if (data.priority && ["Low", "Medium", "High"].includes(data.priority)) {
+                    priorityField.value = data.priority;
+                }
+            }
+        } catch (error) {
+            aiSuggestion.innerHTML = 'Our Help Desk team is ready to analyze this. Providing detailed error messages helps us resolve it faster!';
+        }
+    }
+
+    // Trigger AI analysis when typing with a 0.5-second delay (debounce) to make it highly responsive
+    function handleInput() {
+        clearTimeout(debounceTimer);
+        const text = (titleField.value + ' ' + descField.value);
+        debounceTimer = setTimeout(() => {
+            fetchAiSuggestion(text);
+        }, 500); // reduced from 1000ms to 500ms for faster tip display
+    }
+
+    titleField.addEventListener('input', handleInput);
+    descField.addEventListener('input', handleInput);
+</script>
+
+<%- include('partials/footer') %>
